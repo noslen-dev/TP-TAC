@@ -39,7 +39,7 @@ dseg	segment para public 'data'
 		String_TJ		   db		 "    /100$"
 
 		String_num 		 db 		"  0 $"
-    str_nivel_1  	 db	    "ISEC$"	
+        str_nivel_1  	 db	    "ISEC$"	
 		Construir_nome db	    "    $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
@@ -350,7 +350,7 @@ LE_TECLA	ENDP
 
 
 ;################################
-isalpha PROC
+isalpha PROC ;1 se Car for uma letra, 0 caso contrario
     push AX
 		pushf
 
@@ -404,37 +404,38 @@ strcmp ENDP
 
 
 ;####################
+;;;mete 1 em flag se o jogador venceu
+;;;mete 0 em flag se os carateres sao iguais mas ainda nao acabou
+;;;mete -1 em flag se os carateres foram apanhados por ordem errada
 form_game PROC ;si para str_nivel_1 || di para Construir_nome
-;flag=1 se a string contruir ja estiver cheia e for igual
-		push AX
     pushf
-
+    push ax
+    
+    
     mov flag, 0 ;resetar a flag
-		call strcmp
-		cmp flag, 1
-		jz  vitoria ;strings completas e iguais
-		
-		mov flag, 0 ;resetar a flag
+    mov ah, Car
+    cmp ah, [si] 
+    jz  iguais ; o carater apanhado e igual ao correspondente na string final
+    jmp diferentes
 
-		mov al, Car ;carater que apanhamos
-		cmp [si], al ;ver se sao iguais
-		jnz acaba
-		mov [di], al ;preencher a string game
-		inc di
-		inc si
-		jmp fim_form_game
-
-vitoria:
-    mov ah, STR_CHEIA
-    mov flag, ah
-		jmp fim_form_game
-acaba:
-    mov ah, ORDEM_ERRADA
-    mov flag, ah
-fim_form_game:	
+iguais:
+    call strcmp ;flag=1 se as strings forem iguais
+    cmp  flag, 1
+    jz   venceu
+    mov  flag, 0; o carater esta certo mas ainda nao acabamos o jogo
+    mov  ah, Car
+    mov  [di], ah ;metemos o carater na string
+    inc  di
+    inc  si
+    jmp  fim
+diferentes:
+    mov flag, -1 ;o carater foi apanhado por ordem errada
+    jmp fim
+venceu: ;a flag ja e 1
+fim:
+    pop ax
     popf
-		pop AX	
-		ret
+    ret
 form_game ENDP
 ;####################
 
@@ -475,12 +476,12 @@ CICLO: goto_xy	POSxa,POSya
       
 			goto_xy	POSxa,POSya ;como andamos para uma nova posicao, temos de voltar atras
     
-      call isalpha    ;vemos se o carater anterior e uma letra(Car)
-			                
-			mov ah, flag
-			cmp flag, 0 
-			jnz letra               ;o carater e uma letra vamos para um label que 
-			                        ;apenas nos muda o Car
+      call isalpha    ;vemos se o carater anterior e uma letra(Car)(1 == e)
+			              
+			cmp flag, 0    
+			jnz letra      ;e letra
+;saltamos para um label que altera o valor de Car para 32
+;e em vez da letra escrevemos um espaco em branco        
 
 
 letra_cont: 
@@ -558,21 +559,19 @@ PAREDE:   mov   al, POSxa	 ;repoe as coordenadas anteriores como as atuais
 					jmp   LER_SETA
 
 letra:
-		;;;chamar funcao pa ver se o carater em car faz parte da string vitoria;;;
-	  call form_game
-		mov ah, flag ; ver se o jogo chegou ao fim(se se enganou na ordem)
-		cmp ah, ORDEM_ERRADA
-		jz  fim ; ele enganou-se na ordem
-		cmp ah, STR_CHEIA
-		jz  fim ; a string esta cheia==vitoria
+    call form_game
+    cmp flag, 1 ;venceu?
+    jz  fim
+    cmp flag, -1 ;perdeu?
+    jz fim
+    ; e porque continuamos no jogo
+    goto_xy 11, 14
+    MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
+    goto_xy POSxa, POSya
 
-		;senao, escrevemos a palavra atualizada
-		goto_xy 11, 14 
-		MOSTRA  Construir_nome ;escrever a palavra
-		goto_xy POSxa, POSya ;voltar para onde estavamos antes
-    
-		mov Car, 32 ;o carater reposto sera este
-		jmp letra_cont
+    mov Car, 32 ;carater que vai ser reposto em vez da letra
+
+    jmp letra_cont
 fim:				
 			RET
 AVATAR		endp
