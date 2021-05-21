@@ -20,11 +20,12 @@
 
 dseg	segment para public 'data'
     
-		flag           db    0 ;flag para condicoes logicas
+		flag           sbyte    0 ;flag para condicoes logicas
 		index          byte  0
     timer          db    "            "
 		STR12	 		     DB 		"            "	; String para 12 digitos
-		
+		ORDEM_ERRADA   byte   -1
+		STR_CHEIA      byte    1
 		
     seg_timer      dw    0
 
@@ -39,7 +40,7 @@ dseg	segment para public 'data'
 
 		String_num 		 db 		"  0 $"
     str_nivel_1  	 db	    "ISEC$"	
-		Construir_nome db	    "        $"	
+		Construir_nome db	    "    $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
 		
@@ -84,6 +85,8 @@ MOV AH,09H
 LEA DX,STR 
 INT 21H
 ENDM
+
+
 
 ; FIM DAS MACROS
 
@@ -369,17 +372,65 @@ falso:
 isalpha ENDP
 ;##########################################
 
+strcmp PROC ;flag fica a 1 se as strings em di e si forem iguais
+    push di
+		push si
+		push ax
+		pushf
+    mov flag, 0 ;resetar a flag
+compara:
+    mov al, [si]
+		cmp al, '$'
+		jz  iguais
+		cmp al, [di]
+		jnz diferentes
+		inc si
+		inc di
+		jmp compara
+    
+iguais:
+    mov flag, 1
+diferentes: ;a flag ja esta a zero==diferente
+    popf
+		pop ax
+		pop si
+		pop di
+    ret
+
+strcmp ENDP
+;############################
+
+
+
+
 ;####################
 form_game PROC ;si para str_nivel_1 || di para Construir_nome
-    push AX
+;flag=1 se a string contruir ja estiver cheia e for igual
+		push AX
     pushf
+
+    mov flag, 0 ;resetar a flag
+		call strcmp
+		cmp flag, 1
+		jz  vitoria ;strings completas e iguais
+		
+		mov flag, 0 ;resetar a flag
 
 		mov al, Car ;carater que apanhamos
 		cmp [si], al ;ver se sao iguais
-		jnz fim_form_game
+		jnz acaba
 		mov [di], al ;preencher a string game
 		inc di
 		inc si
+		jmp fim_form_game
+
+vitoria:
+    mov ah, STR_CHEIA
+    mov flag, ah
+		jmp fim_form_game
+acaba:
+    mov ah, ORDEM_ERRADA
+    mov flag, ah
 fim_form_game:	
     popf
 		pop AX	
@@ -509,9 +560,17 @@ PAREDE:   mov   al, POSxa	 ;repoe as coordenadas anteriores como as atuais
 letra:
 		;;;chamar funcao pa ver se o carater em car faz parte da string vitoria;;;
 	  call form_game
+		mov ah, flag ; ver se o jogo chegou ao fim(se se enganou na ordem)
+		cmp ah, ORDEM_ERRADA
+		jz  fim ; ele enganou-se na ordem
+		cmp ah, STR_CHEIA
+		jz  fim ; a string esta cheia==vitoria
+
+		;senao, escrevemos a palavra atualizada
 		goto_xy 11, 14 
 		MOSTRA  Construir_nome ;escrever a palavra
 		goto_xy POSxa, POSya ;voltar para onde estavamos antes
+    
 		mov Car, 32 ;o carater reposto sera este
 		jmp letra_cont
 fim:				
