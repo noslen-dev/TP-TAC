@@ -20,29 +20,29 @@
 
 dseg	segment para public 'data'
 
-    timer       db    "            "
-		STR12	 		  DB 		"            "	; String para 12 digitos
-		DDMMAAAA 		db		"                     "
+    timer          db    "            "
+		STR12	 		     DB 		"            "	; String para 12 digitos
+		DDMMAAAA 		   db		"                     "
 		
-    seg_timer       dw    0
+    seg_timer      dw    0
 
-		Horas			  dw		0				; Vai guardar a HORA actual
-		Minutos			dw		0				; Vai guardar os minutos actuais
-		Segundos		dw		0				; Vai guardar os segundos actuais
-		Old_seg			dw		0				; Guarda os ultimos segundos que foram lidos
-		Tempo_init	dw		0				; Guarda O Tempo de inicio do jogo
-		Tempo_j			 dw		0				; Guarda O Tempo que decorre o  jogo
-		Tempo_limite	dw		100				; tempo m�ximo de Jogo
-		String_TJ		db		"    /100$"
+		Horas			     dw		 0				; Vai guardar a HORA actual
+		Minutos			   dw		 0				; Vai guardar os minutos actuais
+		Segundos		   dw		 0				; Vai guardar os segundos actuais
+		Old_seg			   dw		 0				; Guarda os ultimos segundos que foram lidos
+		Tempo_init	   dw		 0				; Guarda O Tempo de inicio do jogo
+		Tempo_j			   dw		 0				; Guarda O Tempo que decorre o  jogo
+		Tempo_limite	 dw		 100				; tempo m�ximo de Jogo
+		String_TJ		   db		 "    /100$"
 
 		String_num 		 db 		"  0 $"
     String_nome  	 db	    "ISEC  $"	
 		Construir_nome db	    "            $"	
-		Dim_nome		dw		5	; Comprimento do Nome
-		indice_nome		dw		0	; indice que aponta para Construir_nome
+		Dim_nome		   dw		  5	; Comprimento do Nome
+		indice_nome		 dw		  0	; indice que aponta para Construir_nome
 		
-		Fim_Ganhou		db	    " Ganhou $"	
-		Fim_Perdeu		db	    " Perdeu $"	
+		Fim_Ganhou		 db	    " Ganhou $"	
+		Fim_Perdeu		 db	    " Perdeu $"	
 
     Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
     Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
@@ -127,6 +127,9 @@ mostra_seg PROC ;mostra um timer que vai do zero ate 99
 		PUSH DX
     ;;;segundos;;;;;
 		mov 	ax, seg_timer	    ;carregar os segundos atuais
+		cmp   ax, 100
+    je    time_100
+
 		MOV 	bl, 10     
 		div 	bl
 		add 	al, 30h				; Caracter Correspondente às dezenas
@@ -139,10 +142,28 @@ mostra_seg PROC ;mostra um timer que vai do zero ate 99
 		MOV 	timer[5],'0'
 		MOV 	timer[6],'s'
 		MOV 	timer[7],'$'
+    jmp   mostra_time
+time_100:
+    MOV 	timer[0],'1'   ; Construir string
+		MOV 	timer[1],'0'
+		MOV 	timer[2],'0'
+		MOV 	timer[3],'/'		
+		MOV 	timer[4],'1'
+		MOV 	timer[5],'0'
+		MOV 	timer[6],'0'
+		MOV 	timer[7],'s'
+		MOV 	timer[7],'$'
+		GOTO_XY	57,0 ;canto do ecra
+		MOSTRA	timer
+    ;;resetar o nosso timer;;;;
+		mov seg_timer, 0
+    jmp fim_time
 
+mostra_time:    
     GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
 		inc     seg_timer
+fim_time:
 	;;repor;;;;
 		POP DX
 		POP CX
@@ -165,7 +186,7 @@ Trata_Horas PROC
 		MOV		AX, Segundos
 		cmp		AX, Old_seg			; Verifica se os segundos mudaram desde a ultima leitura
 		je		fim_horas		  	; Se a hora não mudou desde a última leitura sai.
-		call  mostra_seg      ;vai mostrar old_seg
+		call  mostra_seg      ;vai o counter do jogo
 		
 		
 		mov		Old_seg, AX			; Se segundos são diferentes actualiza informação do tempo 
