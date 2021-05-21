@@ -32,11 +32,11 @@ dseg	segment para public 'data'
 		Old_seg			   dw		 0				; Guarda os ultimos segundos que foram lidos
 		Tempo_init	   dw		 0				; Guarda O Tempo de inicio do jogo
 		Tempo_j			   dw		 0				; Guarda O Tempo que decorre o  jogo
-		Tempo_limite	 dw		 100				; tempo m�ximo de Jogo
+		Tempo_limite	 dw		 100			; tempo maximo de Jogo
 		String_TJ		   db		 "    /100$"
 
 		String_num 		 db 		"  0 $"
-    String_nome  	 db	    "ISEC  $"	
+    str_nivel_1  	 db	    "ISEC$"	
 		Construir_nome db	    "            $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
@@ -47,7 +47,7 @@ dseg	segment para public 'data'
     Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
     Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
     Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-    Fich         	  db      'labi.TXT',0
+    Fich         	  db      'labi1.TXT',0
     HandleFich      dw      0
     car_fich        db      ?
 
