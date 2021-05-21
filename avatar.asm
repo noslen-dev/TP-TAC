@@ -20,11 +20,11 @@
 
 dseg	segment para public 'data'
 
-    mystr       db    "            "
+    timer       db    "            "
 		STR12	 		  DB 		"            "	; String para 12 digitos
 		DDMMAAAA 		db		"                     "
 		
-    myseg       dw    0
+    seg_timer       dw    0
 
 		Horas			  dw		0				; Vai guardar a HORA actual
 		Minutos			dw		0				; Vai guardar os minutos actuais
@@ -126,23 +126,23 @@ mostra_seg PROC ;mostra um timer que vai do zero ate 99
 		PUSH CX
 		PUSH DX
     ;;;segundos;;;;;
-		mov 	ax, myseg	    ;carregar os segundos atuais
+		mov 	ax, seg_timer	    ;carregar os segundos atuais
 		MOV 	bl, 10     
 		div 	bl
 		add 	al, 30h				; Caracter Correspondente às dezenas
 		add		ah,	30h				; Caracter Correspondente às unidades
-		MOV 	mystr[0],al   ; Construir string
-		MOV 	mystr[1],ah
-		MOV 	mystr[2],'/'
-		MOV 	mystr[3],'1'		
-		MOV 	mystr[4],'0'
-		MOV 	mystr[5],'0'
-		MOV 	mystr[6],'s'
-		MOV 	mystr[7],'$'
+		MOV 	timer[0],al   ; Construir string
+		MOV 	timer[1],ah
+		MOV 	timer[2],'/'
+		MOV 	timer[3],'1'		
+		MOV 	timer[4],'0'
+		MOV 	timer[5],'0'
+		MOV 	timer[6],'s'
+		MOV 	timer[7],'$'
 
     GOTO_XY	57,0 ;canto do ecra
-		MOSTRA	mystr
-		inc     myseg
+		MOSTRA	timer
+		inc     seg_timer
 	;;repor;;;;
 		POP DX
 		POP CX
