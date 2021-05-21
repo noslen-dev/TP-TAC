@@ -19,10 +19,12 @@
 .stack 2048
 
 dseg	segment para public 'data'
-
+    
+		flag           db    0 ;flag para condicoes logicas
+		index          byte  0
     timer          db    "            "
 		STR12	 		     DB 		"            "	; String para 12 digitos
-		DDMMAAAA 		   db		"                     "
+		
 		
     seg_timer      dw    0
 
@@ -343,6 +345,33 @@ SAI_TECLA:
 LE_TECLA	ENDP
 
 
+
+;################################
+isalpha PROC
+    push AX
+		pushf
+
+		mov flag, 0 ;resetar sempre a flag
+    mov al, Car
+		cmp al, 'A'
+		jb  falso
+		cmp al, 'Z'
+		ja  falso
+    mov flag, 1 ;o carater e uma letra
+
+		popf
+		pop AX
+    ret
+falso:    
+    popf
+		pop AX
+    ret
+isalpha ENDP
+;##########################################
+
+
+
+
 ;########################################################################
 ; Avatar
 ;Basicamente a estrategia e a seguinte: 
@@ -376,10 +405,18 @@ CICLO: goto_xy	POSxa,POSya
 			jz  PAREDE
       
 			goto_xy	POSxa,POSya ;como andamos para uma nova posicao, temos de voltar atras
+    
+      call isalpha    ;vemos se o carater anterior e uma letra(Car)
+			                
+			mov ah, flag
+			cmp flag, 0 
+			jnz letra               ;o carater e uma letra vamos para um label que 
+			                        ;apenas nos muda o Car
 
 
+letra_cont: ; 
 			mov		ah, 02h
-			mov		dl, Car			      ; Repoe Caracter guardado 
+			mov		dl, Car			      ;Repoe Caracter guardado 
 			int		21H		            ;escreve carater que esta em dl
 		
 			goto_xy	POSx,POSy		
@@ -388,8 +425,9 @@ CICLO: goto_xy	POSxa,POSya
 			int		10h		      ; apanha o carater na posicao do cursor
 			mov		Car, al			; Guarda o Caracter que esta na posicao do Cursor
 			mov		Cor, ah			; Guarda a cor que esta na posicao do Cursor
-	
-			
+	    
+
+
 			
 			goto_xy	78,0			
 			mov		ah, 02h			
@@ -449,6 +487,10 @@ PAREDE:   mov   al, POSxa	 ;repoe as coordenadas anteriores como as atuais
 			    mov 	POSy, al
 					goto_xy	POSx,POSy;voltar onde estavamos antes,para o cursor nao ficar na parede
 					jmp   LER_SETA
+
+letra:
+    mov Car, 32
+		jmp letra_cont
 fim:				
 			RET
 AVATAR		endp
