@@ -419,14 +419,16 @@ form_game PROC ;si para str_nivel_1 || di para Construir_nome
     jmp diferentes
 
 iguais:
+    mov  ah, Car
+    mov  [di], ah ;metemos o carater na string
+
     call strcmp ;flag=1 se as strings forem iguais
     cmp  flag, 1
     jz   venceu
-    mov  flag, 0; o carater esta certo mas ainda nao acabamos o jogo
-    mov  ah, Car
-    mov  [di], ah ;metemos o carater na string
+    ;os carateres sao iguais mas ainda nao acabou
     inc  di
     inc  si
+    mov  flag, 0; ainda nao acabou
     jmp  fim
 diferentes:
     mov flag, -1 ;o carater foi apanhado por ordem errada
@@ -561,17 +563,18 @@ PAREDE:   mov   al, POSxa	 ;repoe as coordenadas anteriores como as atuais
 letra:
     call form_game
     cmp flag, 1 ;venceu?
-    jz  fim
+    jz  vitoria
     cmp flag, -1 ;perdeu?
     jz fim
     ; e porque continuamos no jogo
     goto_xy 11, 14
     MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
     goto_xy POSxa, POSya
-
     mov Car, 32 ;carater que vai ser reposto em vez da letra
-
     jmp letra_cont
+vitoria:
+    goto_xy 11, 14
+    MOSTRA Construir_nome
 fim:				
 			RET
 AVATAR		endp
