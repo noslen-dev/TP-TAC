@@ -39,7 +39,7 @@ dseg	segment para public 'data'
 
 		String_num 		 db 		"  0 $"
     str_nivel_1  	 db	    "ISEC$"	
-		Construir_nome db	    "            $"	
+		Construir_nome db	    "        $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
 		
@@ -369,8 +369,23 @@ falso:
 isalpha ENDP
 ;##########################################
 
+;####################
+form_game PROC ;si para str_nivel_1 || di para Construir_nome
+    push AX
+    pushf
 
-
+		mov al, Car ;carater que apanhamos
+		cmp [si], al ;ver se sao iguais
+		jnz fim_form_game
+		mov [di], al ;preencher a string game
+		inc di
+		inc si
+fim_form_game:	
+    popf
+		pop AX	
+		ret
+form_game ENDP
+;####################
 
 ;########################################################################
 ; Avatar
@@ -382,6 +397,9 @@ isalpha ENDP
 AVATAR	PROC
 			mov		ax,0B800h
 			mov		es,ax
+
+      lea si, str_nivel_1 ;si ponteiro para string nivel
+			lea di, Construir_nome ;di ponteiro para string que ira ser formada
 
 			goto_xy	POSx,POSy ; vai para a posicao 3 3(default, inicio do labirinto)
 			mov 	ah, 08h		  ; guarda o carater que esta na posicao do cursor
@@ -414,7 +432,7 @@ CICLO: goto_xy	POSxa,POSya
 			                        ;apenas nos muda o Car
 
 
-letra_cont: ; 
+letra_cont: 
 			mov		ah, 02h
 			mov		dl, Car			      ;Repoe Caracter guardado 
 			int		21H		            ;escreve carater que esta em dl
@@ -489,7 +507,12 @@ PAREDE:   mov   al, POSxa	 ;repoe as coordenadas anteriores como as atuais
 					jmp   LER_SETA
 
 letra:
-    mov Car, 32
+		;;;chamar funcao pa ver se o carater em car faz parte da string vitoria;;;
+	  call form_game
+		goto_xy 11, 14 
+		MOSTRA  Construir_nome ;escrever a palavra
+		goto_xy POSxa, POSya ;voltar para onde estavamos antes
+		mov Car, 32 ;o carater reposto sera este
 		jmp letra_cont
 fim:				
 			RET
