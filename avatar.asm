@@ -24,8 +24,8 @@ dseg	segment para public 'data'
 		index          byte  0
     timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
-		fim_jogo       byte   0               ;variavel que indica se o jogo ja acabou ou nao
-
+		fim_jogo       byte   2               ;variavel que indica se o jogo ja acabou ou nao
+    ;a 2 significa que e para passar ao proximo nivel
 
     seg_timer      dw    0        ;contador de segundos
 
@@ -560,7 +560,7 @@ LER_SETA:	call 	LE_TECLA
 			cmp		ah, 1 
 			je		ESTEND
 			CMP 	AL, 27	; vemos se al==escape
-			JE		FIM     ; se for saimos
+			JE		escape     ; se for saimos
 			jmp		LER_SETA
 		
 ESTEND:		cmp 	al,48h
@@ -604,8 +604,8 @@ letra:
     goto_xy POSxa, POSya
     jmp letra_cont
 vitoria:
-    goto_xy 11, 14
-    MOSTRA Construir_nome
+    goto_xy 11, 20
+    MOSTRA Fim_Ganhou
 		mov  fim_jogo, 2 ;passar ao proximo nivel
 		jmp fim
 recomeca:
@@ -623,8 +623,10 @@ recomeca:
 acabou_tempo:
     goto_xy 15, 20
     MOSTRA Fim_Perdeu
-		mov fim_jogo, 1 ;acabou o jogo
-fim:				
+escape:
+    mov fim_jogo, 1; escape==acabar jogo
+
+fim:			
 			RET
 AVATAR		endp
 
@@ -638,12 +640,24 @@ Main  proc
 		mov			ax,0B800h
 		mov			es,ax
 		;#####################
+    
+		mov cl, 5; numero de niveis
+inicio_jogo:		
+    cmp cl, 0
+		jz  fim_main
+		cmp fim_jogo, 2; e para passar ao proximo nivel?
+		jnz fim_main
 
-		call		apaga_ecran 
-		goto_xy		0,0
-		call		IMP_FICH ;escrevemos o ficheiro
-		call 		AVATAR   ;chamamos o boneco e tudo o k tem a ver com mexe-lo
-  
+		;proximo nivel
+		mov seg_timer, 0 ;resetar o tempo
+		call apaga_ecran
+    goto_xy 0,0
+		call IMP_FICH
+		call AVATAR
+		dec  cl
+		jmp  inicio_jogo
+
+fim_main:		
 		;#######################################
 		goto_xy		0,22   ;final do ecra?
 		mov			ah,4CH
@@ -651,3 +665,4 @@ Main  proc
 Main	endp
 Cseg	ends
 end	Main
+
