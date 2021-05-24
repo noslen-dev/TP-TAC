@@ -39,7 +39,7 @@ dseg	segment para public 'data'
 		String_TJ		   db		 "    /100$"
 
 		String_num 		 db 		"  0 $"
-    str_nivel  	 db	    "ISEC     $"	
+    str_nivel  	   db	    "ISEC$"	
 		Construir_nome db	    "    $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
