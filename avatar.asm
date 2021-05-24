@@ -382,12 +382,11 @@ LE_TECLA	ENDP
 
 
 ;################################
-isalpha PROC ;flag=1 se Car for uma letra, 0 caso contrario
+isalpha PROC ;flag=1 se o carater em al for uma letra, 0 caso contrario
     push AX
 		pushf
 
 		mov flag, 0 ;resetar sempre a flag
-    mov al, Car
 		cmp al, 'A'
 		jb  falso
 		cmp al, 'Z'
@@ -439,20 +438,19 @@ strcmp ENDP
 ;;;mete 1 em flag se o jogador venceu
 ;;;mete 0 em flag se os carateres sao iguais mas ainda nao acabou
 ;;;mete -1 em flag se os carateres foram apanhados por ordem errada
+;;;usa carater que esta em al
 form_game PROC ;si para str_nivel_1 || di para Construir_nome
     pushf
     push ax
     
     
     mov flag, 0 ;resetar a flag
-    mov ah, Car
-    cmp ah, [si] 
+    cmp al, [si] 
     jz  iguais ; o carater apanhado e igual ao correspondente na string final
     jmp diferentes
 
 iguais:
-    mov  ah, Car
-    mov  [di], ah ;metemos o carater na string
+    mov  [di], al ;metemos o carater na string
     
     call strcmp ;flag=1 se as strings forem iguais
     cmp  flag, 1
@@ -505,22 +503,20 @@ CICLO: goto_xy	POSxa,POSya
 			mov ah, 08h
 			mov bh,0			    
 			int 10h	
-			cmp al, 177
+			cmp al, 177 ;carater fica em al
 			jz  PAREDE
       
-			goto_xy	POSxa,POSya ;como andamos para uma nova posicao, temos de voltar atras
-    
-      call isalpha    ;vemos se o carater anterior e uma letra(Car)(1 == e)
+      call isalpha    ;vemos se o carater na posicao atual e uma letra
 			              
-			cmp flag, 0    
-			jnz letra      ;e letra
+			cmp flag, 1    
+			jz  letra      ;e letra
 ;saltamos para um label que altera o valor de Car para 32
 ;e em vez da letra escrevemos um espaco em branco        
-
+      goto_xy POSxa, POSya
 
 letra_cont: 
 			mov		ah, 02h
-			mov		dl, Car			      ;Repoe Caracter guardado 
+			mov		dl, 32			      ;O carater reposto sera sempre um espco em branco 
 			int		21H		            ;escreve carater que esta em dl
 		
 			goto_xy	POSx,POSy		
@@ -572,7 +568,7 @@ ESTEND:		cmp 	al,48h
 			dec		POSy		;cima
 			jmp		CICLO
 
-BAIXO:		cmp		al,50h
+BAIXO: cmp		al, 50h
 			jne		ESQUERDA
 			inc 	POSy		;Baixo
 			jmp		CICLO
@@ -606,7 +602,6 @@ letra:
     goto_xy 11, 14
     MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
     goto_xy POSxa, POSya
-    mov Car, 32 ;carater que vai ser reposto em vez da letra
     jmp letra_cont
 vitoria:
     goto_xy 11, 14
@@ -654,6 +649,3 @@ Main  proc
 Main	endp
 Cseg	ends
 end	Main
-
-
-		
