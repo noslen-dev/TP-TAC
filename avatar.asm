@@ -24,9 +24,9 @@ dseg	segment para public 'data'
 		index          byte  0
     timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
-		ORDEM_ERRADA   byte   -1
-		STR_CHEIA      byte    1
-		
+		fim_jogo       byte   0               ;variavel que indica se o jogo ja acabou ou nao
+
+
     seg_timer      dw    0        ;contador de segundos
 
 		Horas			     dw		 0				; Vai guardar a HORA actual
@@ -54,13 +54,13 @@ dseg	segment para public 'data'
     HandleFich      dw      0
     car_fich        db      ?
 
-		string	  db	"Teste pratico de T.I",0
-		Car				db	32	; Guarda um caracter do Ecran 
-		Cor				db	7	; Guarda os atributos de cor do caracter
-		POSy			db	3	; a linha pode ir de [1 .. 25]
-		POSx			db	3	; POSx pode ir [1..80]	
-		POSya			db	3	; Posicao anterior de y
-		POSxa			db	3	; Posicao anterior de x
+		string	        db	    "Teste pratico de T.I",0
+		Car				      db	    32	; Guarda um caracter do Ecran 
+		Cor				      db	    7	; Guarda os atributos de cor do caracter
+		POSy			      db	    3	; a linha pode ir de [1 .. 25]
+		POSx		      	db	    3	; POSx pode ir [1..80]	
+		POSya			      db	    3	; Posicao anterior de y
+		POSxa			      db	    3	; Posicao anterior de x
 dseg	ends
 
 cseg	segment para public 'code'
@@ -160,10 +160,14 @@ time_100:
 		MOV 	timer[8],'$'
 		GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
-    ;;resetar o nosso timer;;;;
-	mov seg_timer, 0
-  jmp fim_time
 
+    ;;resetar o nosso timer;;;;
+	  ;;mov seg_timer, 0;;
+		;;jmp fim_time;;
+
+		;;tempo chegou ao fim == acabou o jogo
+		mov fim_jogo, 1
+    jmp fim_time
 mostra_time:    
     GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
@@ -177,9 +181,31 @@ fim_time:
     ret
 mostra_seg ENDP
 
+;;;######################
+Reseta_String PROC
+
+		PUSH si
+		PUSHF
+
+		xor si, si
+Continua:
+		cmp Construir_nome[si], '$'
+		je Fim
+		jne ResetaI
+		
+ResetaI: 
+	mov Construir_nome[si], ' '
+	inc si
+	jmp Continua
+Fim:
+		POPF
+		POP si
+		RET
+Reseta_String ENDP
+
 ;##########################################################
 Trata_Horas PROC
-    
+
 		PUSHF
 		PUSH AX
 		PUSH BX
@@ -330,10 +356,16 @@ IMP_FICH	endp
 LE_TECLA	PROC
 sem_tecla:
 		call Trata_Horas
+     
+		cmp fim_jogo, 1 ;acabou o jogo?
+		jz  SAI_TECLA   ;saimos
+
 		MOV	AH,0BH
 		INT 21h ;ve se há carater disponivel no stdin
 		cmp AL,0 ;se al=0, nao ha carater
-		je	sem_tecla
+    
+
+		je	sem_tecla ;continuamos
 		
 		MOV	AH,08H 
 		INT	21H
@@ -421,7 +453,7 @@ form_game PROC ;si para str_nivel_1 || di para Construir_nome
 iguais:
     mov  ah, Car
     mov  [di], ah ;metemos o carater na string
-
+    
     call strcmp ;flag=1 se as strings forem iguais
     cmp  flag, 1
     jz   venceu
@@ -451,7 +483,7 @@ form_game ENDP
 AVATAR	PROC
 			mov		ax,0B800h
 			mov		es,ax
-
+Inicio:
       lea si, str_nivel_1 ;si ponteiro para string nivel
 			lea di, Construir_nome ;di ponteiro para string que ira ser formada
 
@@ -524,8 +556,12 @@ IMPRIME:  mov		ah, 02h
 			    mov 	POSya, al
 ;;;;;Posxa=Posx && Posya=Posy --> guarda a posicao atual em variavies que representam a posicao anterior
 ;;;Atualizamos a posicao do cursor(anterior=atual)
-LER_SETA:	call 	LE_TECLA ;apanhamos uma tecla e fica em al
-			cmp		ah, 1
+LER_SETA:	call 	LE_TECLA 
+      
+      cmp   fim_jogo, 1; acabou o jogo?
+			jz    acabou_tempo
+
+			cmp		ah, 1 
 			je		ESTEND
 			CMP 	AL, 27	; vemos se al==escape
 			JE		FIM     ; se for saimos
@@ -565,7 +601,7 @@ letra:
     cmp flag, 1 ;venceu?
     jz  vitoria
     cmp flag, -1 ;perdeu?
-    jz  fim
+	  jz recomeca
     ; e porque continuamos no jogo
     goto_xy 11, 14
     MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
@@ -575,9 +611,26 @@ letra:
 vitoria:
     goto_xy 11, 14
     MOSTRA Construir_nome
+		jmp fim
+recomeca:
+	call Reseta_String
+	mov POSx, 3
+	mov POSy, 3
+	mov POSxa, 3
+	mov POSya, 3
+	goto_xy 11,14
+  MOSTRA  Construir_nome
+	call apaga_ecran
+	goto_xy 0,0
+	call IMP_FICH
+	jmp Inicio
+acabou_tempo:
+    goto_xy 15, 20
+    MOSTRA Fim_Perdeu
 fim:				
 			RET
 AVATAR		endp
+
 
 
 ;########################################################################
@@ -587,13 +640,15 @@ Main  proc
 		
 		mov			ax,0B800h
 		mov			es,ax
-		
+		;#####################
+
 		call		apaga_ecran 
 		goto_xy		0,0
 		call		IMP_FICH ;escrevemos o ficheiro
 		call 		AVATAR   ;chamamos o boneco e tudo o k tem a ver com mexe-lo
+  
+		;#######################################
 		goto_xy		0,22   ;final do ecra?
-		
 		mov			ah,4CH
 		INT			21H
 Main	endp
