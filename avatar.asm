@@ -39,7 +39,7 @@ dseg	segment para public 'data'
 		String_TJ		   db		 "    /100$"
 
 		String_num 		 db 		"  0 $"
-    str_nivel_1  	 db	    "ISEC$"	
+    str_nivel  	 db	    "ISEC     $"	
 		Construir_nome db	    "    $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
@@ -50,7 +50,7 @@ dseg	segment para public 'data'
     Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
     Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
     Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-    Fich         	  db      'labi1.TXT',0
+    nome_fich         	  db      'labi1.TXT',0
     HandleFich      dw      0
     car_fich        db      ?
 
@@ -304,7 +304,7 @@ IMP_FICH	PROC
 		;abre ficheiro
         mov     ah,3dh
         mov     al,0
-        lea     dx,Fich
+        lea     dx,nome_fich
         int     21h
         jc      erro_abrir
         mov     HandleFich,ax
@@ -439,7 +439,7 @@ strcmp ENDP
 ;;;mete 0 em flag se os carateres sao iguais mas ainda nao acabou
 ;;;mete -1 em flag se os carateres foram apanhados por ordem errada
 ;;;usa carater que esta em al
-form_game PROC ;si para str_nivel_1 || di para Construir_nome
+form_game PROC ;si para str_nivel || di para Construir_nome
     pushf
     push ax
     
@@ -482,7 +482,7 @@ AVATAR	PROC
 			mov		ax,0B800h
 			mov		es,ax
 Inicio:
-      lea si, str_nivel_1 ;si ponteiro para string nivel
+      lea si, str_nivel ;si ponteiro para string nivel
 			lea di, Construir_nome ;di ponteiro para string que ira ser formada
 
 			goto_xy	POSx,POSy ; vai para a posicao 3 3(default, inicio do labirinto)
@@ -606,6 +606,7 @@ letra:
 vitoria:
     goto_xy 11, 14
     MOSTRA Construir_nome
+		mov  fim_jogo, 2 ;passar ao proximo nivel
 		jmp fim
 recomeca:
 	call Reseta_String
@@ -622,6 +623,7 @@ recomeca:
 acabou_tempo:
     goto_xy 15, 20
     MOSTRA Fim_Perdeu
+		mov fim_jogo, 1 ;acabou o jogo
 fim:				
 			RET
 AVATAR		endp
