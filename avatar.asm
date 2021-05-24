@@ -22,12 +22,12 @@ dseg	segment para public 'data'
     
 		flag           sbyte    0 ;flag para condicoes logicas
 		index          byte  0
-    timer          db    "            "
+    timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
 		ORDEM_ERRADA   byte   -1
 		STR_CHEIA      byte    1
 		
-    seg_timer      dw    0
+    seg_timer      dw    0        ;contador de segundos
 
 		Horas			     dw		 0				; Vai guardar a HORA actual
 		Minutos			   dw		 0				; Vai guardar os minutos actuais
@@ -39,7 +39,7 @@ dseg	segment para public 'data'
 		String_TJ		   db		 "    /100$"
 
 		String_num 		 db 		"  0 $"
-        str_nivel_1  	 db	    "ISEC$"	
+    str_nivel_1  	 db	    "ISEC$"	
 		Construir_nome db	    "    $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
@@ -100,12 +100,12 @@ Ler_TEMPO PROC
 		PUSH DX
 	
 		PUSHF
-		MOV AH, 2CH             ; Buscar a hORAS
+		MOV AH, 2CH             ; Buscar as horas
 		INT 21H                 
 		
 		XOR AX,AX
 		MOV AL, DH              ; segundos para al
-		mov Segundos, AX		; guarda segundos na variavel correspondente
+		mov Segundos, AX		    ; guarda segundos na variavel correspondente
 		
 		XOR AX,AX
 		MOV AL, CL              ; Minutos para al
@@ -113,7 +113,7 @@ Ler_TEMPO PROC
 		
 		XOR AX,AX
 		MOV AL, CH              ; Horas para al
-		mov Horas,AX			; guarda HORAS na variavel correspondente
+		mov Horas,AX			      ; guarda HORAS na variavel correspondente
  
 		POPF
 		POP DX
@@ -157,12 +157,12 @@ time_100:
 		MOV 	timer[5],'0'
 		MOV 	timer[6],'0'
 		MOV 	timer[7],'s'
-		MOV 	timer[7],'$'
+		MOV 	timer[8],'$'
 		GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
     ;;resetar o nosso timer;;;;
-		mov seg_timer, 0
-    jmp fim_time
+	mov seg_timer, 0
+  jmp fim_time
 
 mostra_time:    
     GOTO_XY	57,0 ;canto do ecra
@@ -350,7 +350,7 @@ LE_TECLA	ENDP
 
 
 ;################################
-isalpha PROC ;1 se Car for uma letra, 0 caso contrario
+isalpha PROC ;flag=1 se Car for uma letra, 0 caso contrario
     push AX
 		pushf
 
@@ -565,7 +565,7 @@ letra:
     cmp flag, 1 ;venceu?
     jz  vitoria
     cmp flag, -1 ;perdeu?
-    jz fim
+    jz  fim
     ; e porque continuamos no jogo
     goto_xy 11, 14
     MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
