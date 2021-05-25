@@ -190,20 +190,23 @@ mostra_seg ENDP
 
 ;;;######################
 Reseta_String PROC
-
+    
 		PUSH si
+		PUSH ax
 		PUSHF
 
 		lea si, Construir_nome
 Continua:
-		cmp Construir_nome[si], '$'
-		je Fim
+    mov al, ' '
+		cmp al, [si] ;fim da palavra
+		jz Fim
 		
-	  mov Construir_nome[si], ' '
+	  mov [si], al ; construir nome fica com espacos em branco
 	  inc si
 	  jmp Continua
 Fim:
 		POPF
+		POP ax
 		POP si
 		RET
 Reseta_String ENDP
@@ -520,7 +523,10 @@ AVATAR	PROC
 Inicio:
       lea si, str_nivel      ;si ponteiro para string nivel
 			lea di, Construir_nome ;di ponteiro para string que ira ser formada
+
       call reset_pos
+			call Reseta_String
+
 			goto_xy	POSx,POSy ; vai para a posicao 3 3(default, inicio do labirinto)
 			mov 	ah, 08h		  ; guarda o carater que esta na posicao do cursor
 			mov		bh,0			  ; numero da pagina-->0 para ser ecra
@@ -715,7 +721,6 @@ inicio_jogo:
 		dec  n_niveis
 		add  str_ptr, 20 ;passar para a proxima string
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
-		call Reseta_String
 		jmp inicio_jogo
 	
 fim_main:		
