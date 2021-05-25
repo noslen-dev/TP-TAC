@@ -705,7 +705,7 @@ Main  proc
 		mov str_ptr, bx ; str_ptr vai ser ponteiro para as strings nivel
 		mov n_niveis, 2 ;numero de niveis
 inicio_jogo:
-    cmp fim_jogo, 2
+    cmp fim_jogo, 2; passar para o proximo nivel? 
 		jnz fim_loop
 		cmp n_niveis, 0
 		jz  fim_loop
@@ -722,8 +722,9 @@ inicio_jogo:
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
 		jmp inicio_jogo
 fim_loop:		
-    cmp n_niveis, 0 ; se chegamos ate ao ultimo nivel == vitoria
+    cmp fim_jogo, 2 ; se ficamos sempre a subir de nivel
     jnz derrota
+		goto_xy 15,20
     MOSTRA Fim_Ganhou
 		jmp fim_main
     
@@ -740,4 +741,3 @@ fim_main:
 Main	endp
 Cseg	ends
 end	Main
-
