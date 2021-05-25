@@ -657,13 +657,12 @@ vitoria:
 	  mov		dl, 190	  
 		int		21H	
     ;colocamos o avatar nessa posicao
+
+		;mostrar palavra completa
     goto_xy 11, 14
 		MOSTRA Construir_nome
 		;;;;
-    goto_xy 11, 20
-    MOSTRA Fim_Ganhou
 		mov  fim_jogo, 2 ;passar ao proximo nivel
-
 		jmp fim
 recomeca:
   ;resetar o construir nome
@@ -707,9 +706,9 @@ Main  proc
 		mov n_niveis, 2 ;numero de niveis
 inicio_jogo:
     cmp fim_jogo, 2
-		jnz fim_main
+		jnz fim_loop
 		cmp n_niveis, 0
-		jz  fim_main
+		jz  fim_loop
     ;corpo
 		mov  seg_timer, 0 ;resetar o timer
 		call init_string
@@ -722,11 +721,17 @@ inicio_jogo:
 		add  str_ptr, 20 ;passar para a proxima string
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
 		jmp inicio_jogo
-	
-fim_main:		
+fim_loop:		
+    cmp n_niveis, 0 ; se chegamos ate ao ultimo nivel == vitoria
+    jnz derrota
+    MOSTRA Fim_Ganhou
+		jmp fim_main
     
-
+derrota:
+    goto_xy 15, 20
+		MOSTRA  Fim_Perdeu
 		
+fim_main:
   
 		;#######################################
 		goto_xy		0,22   ;final do ecra?
