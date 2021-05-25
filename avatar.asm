@@ -548,8 +548,8 @@ CICLO: goto_xy	POSxa,POSya
 			              
 			cmp flag, 1    
 			jz  letra      ;e letra
-;saltamos para um label que altera o valor de Car para 32
-;e em vez da letra escrevemos um espaco em branco        
+			; ver se esta na ordem certa, se o jogo acabou, etc...
+      
       goto_xy POSxa, POSya
 
 letra_cont: 
@@ -642,9 +642,22 @@ letra:
     goto_xy POSxa, POSya
     jmp letra_cont
 vitoria:
+    goto_xy POSxa, POSya ;onde estamos agora
+		mov		ah, 02h
+	  mov		dl, 32	  ; Coloca espaco em branco
+		int		21H	   
+		;;escrevemos um espaco em branco onde o avatar esta
+
+    goto_xy POSx, POSy ;posicao onde o carater da vitoria esta
+		mov		ah, 02h
+	  mov		dl, 190	  
+		int		21H	
+    ;colocamos o avatar nessa posicao
+
     goto_xy 11, 20
     MOSTRA Fim_Ganhou
 		mov  fim_jogo, 2 ;passar ao proximo nivel
+
 		jmp fim
 recomeca:
 	call Reseta_String
