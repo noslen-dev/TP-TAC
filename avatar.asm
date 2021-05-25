@@ -660,13 +660,13 @@ vitoria:
 
 		jmp fim
 recomeca:
+  ;resetar o construir nome
 	call Reseta_String
+	;repor as variaveis
 	mov POSx, 3
 	mov POSy, 3
 	mov POSxa, 3
 	mov POSya, 3
-	goto_xy 11,14
-  MOSTRA  Construir_nome
 	call apaga_ecran
 	goto_xy 0,0
 	call IMP_FICH
