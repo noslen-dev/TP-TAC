@@ -20,8 +20,15 @@
 
 dseg	segment para public 'data'
     
-		flag           sbyte    0 ;flag para condicoes logicas
-		index          byte  0
+    str_nivel  	   byte	  "                    "
+    str_nivel_1    byte   "ISEC$               "
+		str_nivel_2    byte   "MASM$               "
+		str_nivel_3    byte   "ENGENHARIA$         "
+		str_nivel_4    byte   "MICROSOFT$          "
+		str_nivel_5    byte   "MACROASSEMBLER$     "
+    
+    n_niveis       byte    2            ; variavel que representa o numero de niveis
+		flag           sbyte    0           ;flag para condicoes logicas
     timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
 		fim_jogo       byte   2               ;variavel que indica se o jogo ja acabou ou nao
@@ -38,8 +45,7 @@ dseg	segment para public 'data'
 		Tempo_limite	 dw		 100			; tempo maximo de Jogo
 		String_TJ		   db		 "    /100$"
 
-		String_num 		 db 		"  0 $"
-    str_nivel  	   db	    "ISEC$"	
+
 		Construir_nome db	    "    $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
@@ -202,6 +208,36 @@ Fim:
 		POP si
 		RET
 Reseta_String ENDP
+
+;#################
+init_string PROC ;bx--->str_nivel_1
+    push si
+    push ax
+		push bx
+		pushf
+
+		lea si, str_nivel
+inicio_init_str:
+    mov al, [bx]
+		cmp al, '$'
+		jz fim_init_string
+		mov [si], al
+		inc si
+		inc bx
+		jmp inicio_init_str
+fim_init_string:
+    mov al, '$'
+		mov [si], al ;terminar a string
+
+    popf
+		pop bx
+		pop ax
+		pop si
+    ret
+init_string ENDP
+;#################
+
+
 
 ;##########################################################
 Trata_Horas PROC
@@ -482,9 +518,9 @@ AVATAR	PROC
 			mov		ax,0B800h
 			mov		es,ax
 Inicio:
-      lea si, str_nivel ;si ponteiro para string nivel
+      lea si, str_nivel      ;si ponteiro para string nivel
 			lea di, Construir_nome ;di ponteiro para string que ira ser formada
-
+      
 			goto_xy	POSx,POSy ; vai para a posicao 3 3(default, inicio do labirinto)
 			mov 	ah, 08h		  ; guarda o carater que esta na posicao do cursor
 			mov		bh,0			  ; numero da pagina-->0 para ser ecra
@@ -625,7 +661,6 @@ acabou_tempo:
     MOSTRA Fim_Perdeu
 escape:
     mov fim_jogo, 1; escape==acabar jogo
-
 fim:			
 			RET
 AVATAR		endp
@@ -640,23 +675,25 @@ Main  proc
 		mov			ax,0B800h
 		mov			es,ax
 		;#####################
-    
-		mov cl, 5; numero de niveis
-inicio_jogo:		
-    cmp cl, 0
-		jz  fim_main
-		cmp fim_jogo, 2; e para passar ao proximo nivel?
-		jnz fim_main
 
-		;proximo nivel
-		mov seg_timer, 0 ;resetar o tempo
+    lea bx, str_nivel_1 
+		mov n_niveis, 2 ;numero de niveis
+inicio_jogo:
+    cmp fim_jogo, 2
+		jnz fim_main
+		cmp n_niveis, 0
+		jz  fim_main
+    ;corpo
+		mov  seg_timer, 0 ;resetar o timer
+		call init_string
 		call apaga_ecran
     goto_xy 0,0
 		call IMP_FICH
 		call AVATAR
-		dec  cl
-		jmp  inicio_jogo
-
+		;pos intrucoes
+		dec  n_niveis
+		jmp inicio_jogo
+	
 fim_main:		
 		;#######################################
 		goto_xy		0,22   ;final do ecra?
