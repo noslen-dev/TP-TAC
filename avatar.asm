@@ -47,7 +47,7 @@ dseg	segment para public 'data'
 		String_TJ		   db		 "    /100$"
 
 
-		Construir_nome db	    "    $"	
+		Construir_nome db	    "                   $"	
 		Dim_nome		   dw		  5	; Comprimento do Nome
 		indice_nome		 dw		  0	; indice que aponta para Construir_nome
 		
@@ -194,16 +194,14 @@ Reseta_String PROC
 		PUSH si
 		PUSHF
 
-		xor si, si
+		lea si, Construir_nome
 Continua:
 		cmp Construir_nome[si], '$'
 		je Fim
-		jne ResetaI
 		
-ResetaI: 
-	mov Construir_nome[si], ' '
-	inc si
-	jmp Continua
+	  mov Construir_nome[si], ' '
+	  inc si
+	  jmp Continua
 Fim:
 		POPF
 		POP si
@@ -477,7 +475,7 @@ strcmp ENDP
 ;;;mete 0 em flag se os carateres sao iguais mas ainda nao acabou
 ;;;mete -1 em flag se os carateres foram apanhados por ordem errada
 ;;;usa carater que esta em al
-form_game PROC ;si para str_nivel || di para Construir_nome
+form_game PROC ;si para str_nivel || di para Construir_nome !!carater esta em al
     pushf
     push ax
     
@@ -522,7 +520,7 @@ AVATAR	PROC
 Inicio:
       lea si, str_nivel      ;si ponteiro para string nivel
 			lea di, Construir_nome ;di ponteiro para string que ira ser formada
-      
+      call reset_pos
 			goto_xy	POSx,POSy ; vai para a posicao 3 3(default, inicio do labirinto)
 			mov 	ah, 08h		  ; guarda o carater que esta na posicao do cursor
 			mov		bh,0			  ; numero da pagina-->0 para ser ecra
@@ -653,7 +651,9 @@ vitoria:
 	  mov		dl, 190	  
 		int		21H	
     ;colocamos o avatar nessa posicao
-
+    goto_xy 11, 14
+		MOSTRA Construir_nome
+		;;;;
     goto_xy 11, 20
     MOSTRA Fim_Ganhou
 		mov  fim_jogo, 2 ;passar ao proximo nivel
@@ -663,10 +663,7 @@ recomeca:
   ;resetar o construir nome
 	call Reseta_String
 	;repor as variaveis
-	mov POSx, 3
-	mov POSy, 3
-	mov POSxa, 3
-	mov POSya, 3
+	call reset_pos
 	call apaga_ecran
 	goto_xy 0,0
 	call IMP_FICH
@@ -680,6 +677,14 @@ fim:
 			RET
 AVATAR		endp
 
+;coloca as variaveis que representam as posicoes no seu estado inicial
+reset_pos PROC
+    mov POSx, 3
+		mov POSy, 3
+		mov POSxa,3
+		mov POSya,3
+		ret
+reset_pos ENDP
 
 
 ;########################################################################
@@ -710,17 +715,14 @@ inicio_jogo:
 		dec  n_niveis
 		add  str_ptr, 20 ;passar para a proxima string
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
+		call Reseta_String
 		jmp inicio_jogo
 	
 fim_main:		
     
 
 		
-    
-
-
-
-
+  
 		;#######################################
 		goto_xy		0,22   ;final do ecra?
 		mov			ah,4CH
