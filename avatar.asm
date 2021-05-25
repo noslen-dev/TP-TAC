@@ -28,7 +28,7 @@ dseg	segment para public 'data'
 		str_nivel_5    byte   "MACROASSEMBLER$     "
 		str_ptr        word    ? ;ponteiro para as strings de nivel
     
-    n_niveis       byte    2            ; variavel que representa o numero de niveis
+    n_niveis       byte     2            ; variavel que representa o numero de niveis
 		flag           sbyte    0           ;flag para condicoes logicas
     timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
@@ -57,7 +57,7 @@ dseg	segment para public 'data'
     Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
     Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
     Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-    nome_fich         	  db      'labi1.TXT',0
+    nome_fich       db      'labi1.TXT',0
     HandleFich      dw      0
     car_fich        db      ?
 
@@ -696,6 +696,7 @@ inicio_jogo:
 		;pos intrucoes
 		dec  n_niveis
 		add  str_ptr, 20 ;passar para a proxima string
+		add nome_fich[4], 1 ;passar para o proximo ficheiro
 		jmp inicio_jogo
 	
 fim_main:		
