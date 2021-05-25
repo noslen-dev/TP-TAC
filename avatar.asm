@@ -26,6 +26,7 @@ dseg	segment para public 'data'
 		str_nivel_3    byte   "ENGENHARIA$         "
 		str_nivel_4    byte   "MICROSOFT$          "
 		str_nivel_5    byte   "MACROASSEMBLER$     "
+		str_ptr        word    ? ;ponteiro para as strings de nivel
     
     n_niveis       byte    2            ; variavel que representa o numero de niveis
 		flag           sbyte    0           ;flag para condicoes logicas
@@ -210,27 +211,28 @@ Fim:
 Reseta_String ENDP
 
 ;#################
-init_string PROC ;bx--->str_nivel_1
+init_string PROC ;coloca em str_nivel, a string que esta em str_ptr
     push si
     push ax
-		push bx
+		push di
 		pushf
 
 		lea si, str_nivel
+		mov di, str_ptr
 inicio_init_str:
-    mov al, [bx]
+    mov al, [di]
 		cmp al, '$'
 		jz fim_init_string
 		mov [si], al
 		inc si
-		inc bx
+		inc di
 		jmp inicio_init_str
 fim_init_string:
     mov al, '$'
 		mov [si], al ;terminar a string
 
     popf
-		pop bx
+		pop di
 		pop ax
 		pop si
     ret
@@ -677,6 +679,7 @@ Main  proc
 		;#####################
 
     lea bx, str_nivel_1 
+		mov str_ptr, bx ; str_ptr vai ser ponteiro para as strings nivel
 		mov n_niveis, 2 ;numero de niveis
 inicio_jogo:
     cmp fim_jogo, 2
@@ -692,9 +695,18 @@ inicio_jogo:
 		call AVATAR
 		;pos intrucoes
 		dec  n_niveis
+		add  str_ptr, 20 ;passar para a proxima string
 		jmp inicio_jogo
 	
 fim_main:		
+    
+
+		
+    
+
+
+
+
 		;#######################################
 		goto_xy		0,22   ;final do ecra?
 		mov			ah,4CH
