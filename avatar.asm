@@ -853,7 +853,7 @@ Main  proc
 		cmp  op, '3' ;sair? 
 		jz   fim_main
 		cmp  op, '2'; top 10?
-		jz   fim_main
+		jz   top10
 		; opcao 1==jogar
 
     lea bx, str_nivel_1 
@@ -865,6 +865,7 @@ inicio_jogo:
 		cmp n_niveis, 0
 		jz  fim_loop
     ;corpo
+		
 		mov  seg_timer, 0 ;resetar o timer
 		call init_string
 		call apaga_ecran
@@ -875,7 +876,7 @@ inicio_jogo:
 		dec  n_niveis
 		add  str_ptr, 20 ;passar para a proxima string
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
-		
+
 		jmp inicio_jogo
 fim_loop:		
     cmp fim_jogo, 2 ; se ficamos sempre a subir de nivel
@@ -887,7 +888,13 @@ fim_loop:
 derrota:
     goto_xy 15, 20
 		MOSTRA  Fim_Perdeu
+		jmp     fim_main
 		
+top10:
+    call apaga_ecran
+    goto_xy 0,0
+		call IMP_TOP
+    		
 fim_main:
   
 		;#######################################
