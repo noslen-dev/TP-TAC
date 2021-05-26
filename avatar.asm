@@ -28,7 +28,22 @@ dseg	segment para public 'data'
 		str_nivel_5    byte   "MACROASSEMBLER$     "
 		str_ptr        word    ? ;ponteiro para as strings de nivel
     
-    n_niveis       byte     2            ; variavel que representa o numero de niveis
+		op             byte    ?             ; variavel que representara a opcao selecionada pelo utilizador
+    menu_str       byte    "MENU$"
+		jogar_str      byte    "1 - Jogar$"
+		top10_str      byte    "2 - Top 10$"
+		sair_str       byte    "3 - Sair$"
+		escolha_str    byte    "Escolha: $"
+    
+		ArrayTopInicial	db 20 DUP ( ? )
+		ControloTr dw 0;
+
+		str_Pontos 		 db      "Pecas Apanhadas:00$"
+		FichTop        db      'top.TXT',0
+	  
+		pontos         word     0
+		
+		n_niveis       byte     2            ; variavel que representa o numero de niveis
 		flag           sbyte    0           ;flag para condicoes logicas
     timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
@@ -41,15 +56,10 @@ dseg	segment para public 'data'
 		Minutos			   dw		 0				; Vai guardar os minutos actuais
 		Segundos		   dw		 0				; Vai guardar os segundos actuais
 		Old_seg			   dw		 0				; Guarda os ultimos segundos que foram lidos
-		Tempo_init	   dw		 0				; Guarda O Tempo de inicio do jogo
-		Tempo_j			   dw		 0				; Guarda O Tempo que decorre o  jogo
-		Tempo_limite	 dw		 100			; tempo maximo de Jogo
-		String_TJ		   db		 "    /100$"
 
 
 		Construir_nome db	    "                   $"	
-		Dim_nome		   dw		  5	; Comprimento do Nome
-		indice_nome		 dw		  0	; indice que aponta para Construir_nome
+	
 		
 		Fim_Ganhou		 db	    " Ganhou $"	
 		Fim_Perdeu		 db	    " Perdeu $"	
@@ -61,7 +71,6 @@ dseg	segment para public 'data'
     HandleFich      dw      0
     car_fich        db      ?
 
-		string	        db	    "Teste pratico de T.I",0
 		Car				      db	    32	; Guarda um caracter do Ecran 
 		Cor				      db	    7	; Guarda os atributos de cor do caracter
 		POSy			      db	    3	; a linha pode ir de [1 .. 25]
@@ -176,6 +185,9 @@ time_100:
 		mov fim_jogo, 1
     jmp fim_time
 mostra_time:    
+    GOTO_XY 25,0
+	  MOSTRA str_Pontos
+		
     GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
 		inc     seg_timer
@@ -240,7 +252,93 @@ fim_init_string:
 init_string ENDP
 ;#################
 
+IMP_TOP	PROC
 
+		push ax
+		push si
+
+		xor si, si
+		xor ax,ax
+		mov ControloTr, 0
+		;abre ficheiro
+        mov     ah,3dh
+        mov     al,2
+        lea     dx,FichTop
+        int     21h
+        jc      erro_abrir
+        mov     HandleFich,ax
+        jmp     ler_ciclo
+
+erro_abrir:
+        mov     ah,09h
+        lea     dx,Erro_Open
+        int     21h
+        jmp     sai_f
+
+ler_ciclo:
+        mov     ah,3fh
+        mov     bx,HandleFich
+        mov     cx,1
+        lea     dx,car_fich
+        int     21h
+		jc		erro_ler
+		cmp		ax,0; EOF?
+		je		fecha_ficheiro
+		cmp ControloTr, 1
+		je Adiciona1
+		cmp ControloTr, 2
+		je Adiciona2
+		cmp ControloTr, 3
+		je FimControlo
+		cmp car_fich, '-'
+		je MudaControlo
+		jne NaoIgual
+MudaControlo:
+		mov ControloTr, 1
+		jmp NaoIgual
+Adiciona1: 
+	mov ah, car_fich
+	mov ArrayTopInicial[si], ah
+	inc si
+	mov ControloTr, 2
+	jmp NaoIgual
+
+Adiciona2:
+	mov ah, car_fich
+	mov ArrayTopInicial[si], ah
+	inc si
+	mov ControloTr, 3
+	jmp NaoIgual
+
+FimControlo:
+	mov ControloTr, 0
+NaoIgual:
+		mov     ah,02h
+		mov	  	dl,car_fich
+		int		21h
+		jmp		ler_ciclo
+
+erro_ler:
+        mov     ah,09h
+        lea     dx,Erro_Ler_Msg
+        int     21h
+
+fecha_ficheiro:
+        mov     ah,3eh
+        mov     bx,HandleFich
+        int     21h
+        jnc     sai_f
+
+        mov     ah,09h
+        lea     dx,Erro_Close
+        Int     21h
+sai_f:
+		pop ax	
+		pop si
+		RET
+		
+		
+IMP_TOP	endp	
 
 ;##########################################################
 Trata_Horas PROC
@@ -510,6 +608,49 @@ fim:
 form_game ENDP
 ;####################
 
+
+ 
+		
+
+menu PROC
+     push ax
+     call apaga_ecran
+     goto_xy 37,10
+		 MOSTRA  menu_str
+		 goto_xy 35,12
+		 MOSTRA  jogar_str
+		 goto_xy 35,14
+		 MOSTRA  top10_str
+		 goto_xy 35,16
+		 MOSTRA  sair_str
+		 goto_xy 35,18
+		 MOSTRA  escolha_str
+		 mov ah, 1 
+		 int 21h
+		 mov op, al
+		 pop ax
+		 ret
+menu ENDP
+
+;########################################################################
+inc_cont PROC
+    push  ax
+		push  bx
+
+    inc   pontos
+		mov 	ax, pontos
+		MOV 	bl, 10     
+		div 	bl
+		add 	al, 30h				
+		add		ah,	30h			
+    mov   str_Pontos[16],al
+    mov   str_Pontos[17],ah
+
+		pop bx
+		pop ax
+    ret
+inc_cont ENDP
+
 ;########################################################################
 ; Avatar
 ;Basicamente a estrategia e a seguinte: 
@@ -635,17 +776,22 @@ PAREDE:   mov   al, POSxa	 ;repoe as coordenadas anteriores como as atuais
 					jmp   LER_SETA
 
 letra:
+    ;operacoes no contador de pecas
     call form_game
     cmp flag, 1 ;venceu?
     jz  vitoria
     cmp flag, -1 ;perdeu?
 	  jz recomeca
+
     ; e porque continuamos no jogo
+		call  inc_cont ;peca correta
     goto_xy 11, 14
     MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
     goto_xy POSxa, POSya
     jmp letra_cont
 vitoria:
+    call  inc_cont ;peca tambem conta
+
     goto_xy POSxa, POSya ;onde estamos agora
 		mov		ah, 02h
 	  mov		dl, 32	  ; Coloca espaco em branco
@@ -665,6 +811,9 @@ vitoria:
 		mov  fim_jogo, 2 ;passar ao proximo nivel
 		jmp fim
 recomeca:
+   mov pontos, 0 ;resetar as letras apanhadas
+   mov str_Pontos[16],48
+	 mov str_Pontos[17],48
   ;resetar o construir nome
 	call Reseta_String
 	;repor as variaveis
@@ -700,6 +849,12 @@ Main  proc
 		mov			ax,0B800h
 		mov			es,ax
 		;#####################
+    call menu 
+		cmp  op, '3' ;sair? 
+		jz   fim_main
+		cmp  op, '2'; top 10?
+		jz   fim_main
+		; opcao 1==jogar
 
     lea bx, str_nivel_1 
 		mov str_ptr, bx ; str_ptr vai ser ponteiro para as strings nivel
@@ -720,6 +875,7 @@ inicio_jogo:
 		dec  n_niveis
 		add  str_ptr, 20 ;passar para a proxima string
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
+		
 		jmp inicio_jogo
 fim_loop:		
     cmp fim_jogo, 2 ; se ficamos sempre a subir de nivel
