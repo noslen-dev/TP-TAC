@@ -19,21 +19,22 @@
 .stack 2048
 
 dseg	segment para public 'data'
-    
+    trocas         byte   ?
     str_nivel  	   byte	  "                    "
-    str_nivel_1    byte   "ISEC$               "
-		str_nivel_2    byte   "MASM$               "
+    str_nivel_1    byte   "ABCDEFGABCDE$       "
+		str_nivel_2    byte   "ABCDEFGABCDEABC$    "
 		str_nivel_3    byte   "ENGENHARIA$         "
 		str_nivel_4    byte   "MICROSOFT$          "
 		str_nivel_5    byte   "MACROASSEMBLER$     "
 		str_ptr        word    ? ;ponteiro para as strings de nivel
     
 		op             byte    ?             ; variavel que representara a opcao selecionada pelo utilizador
-    menu_str       byte    "MENU$"
+ 	menu_str       byte    "MENU$"
 		jogar_str      byte    "1 - Jogar$"
 		top10_str      byte    "2 - Top 10$"
 		sair_str       byte    "3 - Sair$"
 		escolha_str    byte    "Escolha: $"
+		Nome_STR		db 		"1234567890$"
     
 		ArrayTopInicial	db 20 DUP ( ? )
 		ControloTr dw 0;
@@ -41,16 +42,19 @@ dseg	segment para public 'data'
 		str_Pontos 		 db      "Pecas Apanhadas:00$"
 		FichTop        db      'top.TXT',0
 	  
-		pontos         word     0
-		
+		pontos        	word     0
+		pontosUnidades db 0
+		pontosDezenas db 0
+		ControloOrdArray word 0
+		;pontosDezenas pontosUnidades
 		n_niveis       byte     2            ; variavel que representa o numero de niveis
 		flag           sbyte    0           ;flag para condicoes logicas
-    timer          db    "            " ;string que ira mostrar o nosso tempo
+    	timer          db    "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
 		fim_jogo       byte   2               ;variavel que indica se o jogo ja acabou ou nao
     ;a 2 significa que e para passar ao proximo nivel
 
-    seg_timer      dw    0        ;contador de segundos
+    	seg_timer      dw    0        ;contador de segundos
 
 		Horas			     dw		 0				; Vai guardar a HORA actual
 		Minutos			   dw		 0				; Vai guardar os minutos actuais
@@ -61,7 +65,7 @@ dseg	segment para public 'data'
 		Construir_nome db	    "                   $"	
 	
 		
-		Fim_Ganhou		 db	    " Ganhou $"	
+		FimPedeNome		 db	    " Ganhaste, Insere o teu nome (Terminado em 0): $"	
 		Fim_Perdeu		 db	    " Perdeu $"	
 
     Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
@@ -340,6 +344,16 @@ sai_f:
 		
 IMP_TOP	endp	
 
+;##########################
+
+
+
+;##########################
+
+
+
+
+
 ;##########################################################
 Trata_Horas PROC
 
@@ -607,11 +621,6 @@ fim:
     ret
 form_game ENDP
 ;####################
-
-
- 
-		
-
 menu PROC
      push ax
      call apaga_ecran
@@ -840,7 +849,211 @@ reset_pos PROC
 		ret
 reset_pos ENDP
 
+;########################################################################
+GuardaNome PROC
 
+		
+		PUSH SI
+		PUSH AX
+		;Nome_STR
+		xor si,si
+		
+ContinuaGuardaNome:
+		xor ax,ax
+		mov ah, 1 
+		int 21h
+		cmp al, 30h
+		je FimGuardaNome
+		jne GuardaCHAR
+GuardaCHAR:
+		mov Nome_STR[SI], al
+		INC SI
+		jmp ContinuaGuardaNome
+FimGuardaNome:
+		POP SI
+		POP AX
+		ret
+GuardaNome ENDP
+;########################################################################
+MArray PROC
+
+		push si
+		pushf
+		xor si,si	
+Cont:
+		mov     ah,02h
+		mov	  	dl, ArrayTopInicial[si]
+		int		  21h
+		inc     si
+		cmp     si, 20
+		jne     Cont
+
+		popf
+		pop si
+		ret
+MArray ENDP
+
+		
+MostraPontos PROC
+		push AX
+		mov     ah,02h
+		mov	  	dx, pontos 
+		int		21h
+		inc si
+		cmp si, 20
+		pop ax
+		ret
+MostraPontos ENDP
+
+
+;#################
+
+
+;#################
+
+
+
+
+
+ordenaArray PROC
+			push si
+			push cx
+			push ax
+
+			xor si,si
+			xor cx,cx
+			xor ax,ax
+ContIts:
+			mov al, ArrayTopInicial[si]
+			inc si
+			mov ah, ArrayTopInicial[si]
+
+      sub al, 30h
+			sub ah, 30h
+
+			inc si
+			mov bl, 10
+			mul bl
+			add al , ah
+			cmp pontos, ax
+			jae ordArr
+			jmp ContIts
+ordArr:
+			mov ControloOrdArray, si
+			sub ControloOrdArray, 2 ;;;;;!!!!!!!!!!!!!!!!!!
+			mov si, 19
+			sub si, 2
+ContinuaOrdenArray:
+			mov al, ArrayTopInicial[si]
+			mov ArrayTopInicial[si+2], al
+			sub si,1
+			mov al, ArrayTopInicial[si]
+			mov ArrayTopInicial[si+2], al
+			cmp si, ControloOrdArray
+			jz InsereNaPos
+			sub si, 1
+			jmp ContinuaOrdenArray
+InsereNaPos:
+		xor cl, cl
+		mov 	ax,pontos
+		MOV		bl, 10         
+		div 	bl
+		add 	al, 30h				
+		add		ah,	30h	
+		mov ArrayTopInicial[si], al
+		inc si
+		mov ArrayTopInicial[si], ah
+
+		pop si
+		pop cx	
+		pop ax
+		ret
+ordenaArray ENDP
+;########################################################################
+AltTop	PROC
+
+		push ax
+		push si
+
+		xor si, si
+		xor ax,ax
+		mov ControloTr, 0
+		;abre ficheiro
+        mov     ah,3dh
+        mov     al,2
+        lea     dx,FichTop
+        int     21h
+        jc      erro_abrir
+        mov     HandleFich,ax
+        jmp     ler_ciclo
+
+erro_abrir:
+        mov     ah,09h
+        lea     dx,Erro_Open
+        int     21h
+        jmp     sai_f
+
+ler_ciclo:
+        mov     ah,3fh
+        mov     bx,HandleFich
+        mov     cx,1
+        lea     dx,car_fich
+        int     21h
+		    jc		  erro_ler
+		    cmp		  ax,0; EOF?
+		    je		  fecha_ficheiro
+		    cmp     ControloTr, 1
+		    je      Adiciona1
+				cmp     ControloTr, 2
+				je      Adiciona2
+				cmp     ControloTr, 3
+				je      FimControlo
+				cmp     car_fich, '-'
+				je      MudaControlo
+				jne     NaoIgual
+MudaControlo:
+		mov ControloTr, 1
+		jmp NaoIgual
+Adiciona1: 
+	mov ah, car_fich
+	mov ArrayTopInicial[si], ah
+	inc si
+	mov ControloTr, 2
+	jmp NaoIgual
+
+Adiciona2:
+	mov ah, car_fich
+	mov ArrayTopInicial[si], ah
+	inc si
+	mov ControloTr, 3
+	jmp NaoIgual
+
+FimControlo:
+	mov ControloTr, 0
+NaoIgual:
+		jmp		ler_ciclo
+
+erro_ler:
+        mov     ah,09h
+        lea     dx,Erro_Ler_Msg
+        int     21h
+
+fecha_ficheiro:
+        mov     ah,3eh
+        mov     bx,HandleFich
+        int     21h
+        jnc     sai_f
+
+        mov     ah,09h
+        lea     dx,Erro_Close
+        Int     21h
+sai_f:
+		pop ax	
+		pop si
+		RET
+		
+		
+AltTop	endp
 ;########################################################################
 Main  proc
 		mov			ax, dseg
@@ -879,12 +1092,20 @@ inicio_jogo:
 
 		jmp inicio_jogo
 fim_loop:		
-    cmp fim_jogo, 2 ; se ficamos sempre a subir de nivel
+    cmp fim_jogo, 2; se ficamos sempre a subir de nivel
     jnz derrota
 		goto_xy 15,20
-    MOSTRA Fim_Ganhou
-		jmp fim_main
-    
+    call GuardaNome
+	  call apaga_ecran
+	
+	;MOSTRA Nome_STR
+	call AltTop      ;abre o ficheiro top e mete o array com esses valores
+	;call MArray     ;mostra o array
+	;call ordenaArray ;insere o nosso valor no array
+	call ordenaArray
+	call MArray
+	jmp fim_main
+
 derrota:
     goto_xy 15, 20
 		MOSTRA  Fim_Perdeu
@@ -893,8 +1114,8 @@ derrota:
 top10:
     call apaga_ecran
     goto_xy 0,0
-		call IMP_TOP
-    		
+		call IMP_TOP	
+		
 fim_main:
   
 		;#######################################
