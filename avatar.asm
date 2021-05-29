@@ -21,22 +21,24 @@
 dseg	segment para public 'data'
     trocas         byte   ?
     str_nivel  	   byte	  "                    "
-    str_nivel_1    byte   "ABCDEFGABCDE$       "
-		str_nivel_2    byte   "ABCDEFGABCDEABC$    "
+    str_nivel_1    byte   "ISECISE$            "
+		str_nivel_2    byte   "ISE$                "
 		str_nivel_3    byte   "ENGENHARIA$         "
 		str_nivel_4    byte   "MICROSOFT$          "
 		str_nivel_5    byte   "MACROASSEMBLER$     "
 		str_ptr        word    ? ;ponteiro para as strings de nivel
     
 		op             byte    ?             ; variavel que representara a opcao selecionada pelo utilizador
- 	menu_str       byte    "MENU$"
+   	menu_str       byte    "MENU$"
 		jogar_str      byte    "1 - Jogar$"
 		top10_str      byte    "2 - Top 10$"
 		sair_str       byte    "3 - Sair$"
 		escolha_str    byte    "Escolha: $"
 		Nome_STR		db 		"1234567890$"
     
-		ArrayTopInicial	db 20 DUP ( ? )
+		ArrayTopInicial	db 20 DUP (0)
+    array_inteiros  byte  10 dup(?)
+
 		ControloTr dw 0;
 
 		str_Pontos 		 db      "Pecas Apanhadas:00$"
@@ -46,7 +48,7 @@ dseg	segment para public 'data'
 		pontosUnidades db 0
 		pontosDezenas db 0
 		ControloOrdArray word 0
-		;pontosDezenas pontosUnidades
+
 		n_niveis       byte     2            ; variavel que representa o numero de niveis
 		flag           sbyte    0           ;flag para condicoes logicas
     	timer          db    "            " ;string que ira mostrar o nosso tempo
@@ -181,17 +183,12 @@ time_100:
 		GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
 
-    ;;resetar o nosso timer;;;;
-	  ;;mov seg_timer, 0;;
-		;;jmp fim_time;;
+  
 
 		;;tempo chegou ao fim == acabou o jogo
 		mov fim_jogo, 1
     jmp fim_time
 mostra_time:    
-    GOTO_XY 25,0
-	  MOSTRA str_Pontos
-		
     GOTO_XY	57,0 ;canto do ecra
 		MOSTRA	timer
 		inc     seg_timer
@@ -343,16 +340,6 @@ sai_f:
 		
 		
 IMP_TOP	endp	
-
-;##########################
-
-
-
-;##########################
-
-
-
-
 
 ;##########################################################
 Trata_Horas PROC
@@ -676,6 +663,9 @@ Inicio:
 
       call reset_pos
 			call Reseta_String
+			;mostrar string dos pontos
+			GOTO_XY 25,0
+	    MOSTRA str_Pontos
 
 			goto_xy	POSx,POSy ; vai para a posicao 3 3(default, inicio do labirinto)
 			mov 	ah, 08h		  ; guarda o carater que esta na posicao do cursor
@@ -794,6 +784,10 @@ letra:
 
     ; e porque continuamos no jogo
 		call  inc_cont ;peca correta
+
+		GOTO_XY 25,0
+	  MOSTRA str_Pontos
+
     goto_xy 11, 14
     MOSTRA  Construir_nome ;escrevemos no sitio certo a nossa string
     goto_xy POSxa, POSya
@@ -812,6 +806,10 @@ vitoria:
 	  mov		dl, 190	  
 		int		21H	
     ;colocamos o avatar nessa posicao
+     
+		;mostrar string dos pontos
+		GOTO_XY 25,0
+	  MOSTRA str_Pontos
 
 		;mostrar palavra completa
     goto_xy 11, 14
@@ -894,82 +892,183 @@ Cont:
 MArray ENDP
 
 		
-MostraPontos PROC
-		push AX
-		mov     ah,02h
-		mov	  	dx, pontos 
-		int		21h
-		inc si
-		cmp si, 20
-		pop ax
-		ret
-MostraPontos ENDP
-
 
 ;#################
+sort PROC
+    push si
+		push ax
+		push dx
+		xor si, si
+    inc si
+		
+		mov dh, ArrayTopInicial[2]
+		mov dl, ArrayTopInicial[3]
+		mov ah, ArrayTopInicial[4]
+		mov al, ArrayTopInicial[5]
+		mov ArrayTopInicial[2],ah
+		mov ArrayTopInicial[3],al
+		mov ArrayTopInicial[4], dh
+		mov ArrayTopInicial[5], dl
 
 
-;#################
+		mov dh, ArrayTopInicial[4]
+		mov dl, ArrayTopInicial[5]
+		mov ah, ArrayTopInicial[8]
+		mov al, ArrayTopInicial[9]
+		mov ArrayTopInicial[4],ah
+		mov ArrayTopInicial[5],al
+		mov ArrayTopInicial[8], dh
+		mov ArrayTopInicial[9], dl
+
+		mov dh, ArrayTopInicial[6]
+		mov dl, ArrayTopInicial[7]
+		mov ah, ArrayTopInicial[12]
+		mov al, ArrayTopInicial[13]
+		mov ArrayTopInicial[6],ah
+		mov ArrayTopInicial[7],al
+		mov ArrayTopInicial[12], dh
+		mov ArrayTopInicial[13], dl
+
+		mov dh, ArrayTopInicial[8]
+		mov dl, ArrayTopInicial[9]
+		mov ah, ArrayTopInicial[16]
+		mov al, ArrayTopInicial[17]
+		mov ArrayTopInicial[8],ah
+		mov ArrayTopInicial[9],al
+		mov ArrayTopInicial[16], dh
+		mov ArrayTopInicial[17], dl
+
+		mov dh, ArrayTopInicial[10]
+		mov dl, ArrayTopInicial[11]
+		mov ah, ArrayTopInicial[16]
+		mov al, ArrayTopInicial[17]
+		mov ArrayTopInicial[10],ah
+		mov ArrayTopInicial[11],al
+		mov ArrayTopInicial[16], dh
+		mov ArrayTopInicial[17], dl
 
 
+		mov dh, ArrayTopInicial[14]
+		mov dl, ArrayTopInicial[15]
+		mov ah, ArrayTopInicial[16]
+		mov al, ArrayTopInicial[17]
+		mov ArrayTopInicial[14],ah
+		mov ArrayTopInicial[15],al
+		mov ArrayTopInicial[16], dh
+		mov ArrayTopInicial[17], dl
 
 
-
-ordenaArray PROC
-			push si
-			push cx
-			push ax
-
-			xor si,si
-			xor cx,cx
-			xor ax,ax
-ContIts:
-			mov al, ArrayTopInicial[si]
-			inc si
-			mov ah, ArrayTopInicial[si]
-
-      sub al, 30h
-			sub ah, 30h
-
-			inc si
-			mov bl, 10
-			mul bl
-			add al , ah
-			cmp pontos, ax
-			jae ordArr
-			jmp ContIts
-ordArr:
-			mov ControloOrdArray, si
-			sub ControloOrdArray, 2 ;;;;;!!!!!!!!!!!!!!!!!!
-			mov si, 19
-			sub si, 2
-ContinuaOrdenArray:
-			mov al, ArrayTopInicial[si]
-			mov ArrayTopInicial[si+2], al
-			sub si,1
-			mov al, ArrayTopInicial[si]
-			mov ArrayTopInicial[si+2], al
-			cmp si, ControloOrdArray
-			jz InsereNaPos
-			sub si, 1
-			jmp ContinuaOrdenArray
-InsereNaPos:
-		xor cl, cl
-		mov 	ax,pontos
-		MOV		bl, 10         
-		div 	bl
-		add 	al, 30h				
-		add		ah,	30h	
-		mov ArrayTopInicial[si], al
-		inc si
-		mov ArrayTopInicial[si], ah
-
+		pop dx
 		pop si
-		pop cx	
 		pop ax
+    ret
+sort ENDP
+
+;#################
+constroi_array_int  PROC
+    push si
+		push di
+		push ax
+		push bx
+    
+		lea di, array_inteiros
+    lea si, ArrayTopInicial
+    mov bl, 10 
+    mov cx, 10
+ciclo:	
+    xor   ax, ax
+    mov al, [si]
+		sub al, 30h
+    mul bl; ax=al*10
+		mov ah, [si+1]
+		sub ah, 30h
+		add al, ah
+
+		mov [di], al
+
+		add di, 1
+		add si, 2
+    loop ciclo
+    
+		pop bx
+		pop ax
+		pop di
+		pop si
+    ret
+constroi_array_int ENDP
+;####################
+
+deconstroi_array_int PROC
+    push si
+		push di
+		push ax
+		push bx
+    
+		lea di, array_inteiros
+    lea si, ArrayTopInicial
+    mov bl, 10 
+    mov cx, 10
+ciclo:
+    xor   ax, ax
+		mov 	al, [di]	         
+		div 	bl ;ax/10--->quociente em al e resto em ah
+		add 	al, 30h	;dezenas			
+		add		ah,	30h	;unidades
+		mov  	[si], al
+		mov   [si+1], ah	
+
+		add   si, 2
+		add   di, 1
+		loop ciclo	
+    
+		pop bx
+		pop ax
+		pop di
+		pop si
 		ret
-ordenaArray ENDP
-;########################################################################
+deconstroi_array_int ENDP
+;#######################
+insert_points  PROC
+    push si
+		push di
+		push ax
+		push cx
+    
+		lea si, array_inteiros
+		lea di, array_inteiros 
+		add di, 9 ; ultima posicao
+
+		mov cx, 10
+		mov ax, pontos ; vai para al
+ciclo:
+    cmp al, [si]
+		jae insert_pos 
+		inc si
+		loop ciclo
+		jmp fim
+
+insert_pos:
+		cmp di, si
+		jb  insert_pontos 
+		mov ah, [di-1]
+		mov [di], ah
+		dec di
+    jmp insert_pos
+insert_pontos:
+    mov [si], al
+fim:
+    pop cx
+		pop ax
+		pop di
+		pop si
+    ret
+insert_points  ENDP
+
+
+;#######################
+
+
+
 AltTop	PROC
 
 		push ax
@@ -1097,14 +1196,15 @@ fim_loop:
 		goto_xy 15,20
     call GuardaNome
 	  call apaga_ecran
-	
-	;MOSTRA Nome_STR
-	call AltTop      ;abre o ficheiro top e mete o array com esses valores
-	;call MArray     ;mostra o array
-	;call ordenaArray ;insere o nosso valor no array
-	call ordenaArray
-	call MArray
-	jmp fim_main
+	  
+	  call AltTop                ;constroi o array de pontuacoes 
+	  call sort                  ;ordena-o
+	  call constroi_array_int    ;controi um array com os numeros das pontuacoes
+		call insert_points         ;insere os nossos pontos no array
+		call deconstroi_array_int  ;volta a meter esse array em carateres para ser escrito
+		call MArray                ;mostra o array
+   
+	  jmp fim_main
 
 derrota:
     goto_xy 15, 20
