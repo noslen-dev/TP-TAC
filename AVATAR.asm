@@ -19,47 +19,46 @@
 .stack 2048
 
 dseg	segment para public 'data'
-    trocas         byte   ?
+    
     str_nivel  	   byte	  "                    "
-    str_nivel_1    byte   "ISECISECISECIS$     "
-		str_nivel_2    byte   "MASMMASMMASMMASMAS$ "
-		str_nivel_3    byte   "ENGENHARIA$         "
-		str_nivel_4    byte   "MICROSOFT$          "
+    str_nivel_1    byte   "ISEC$               "
+		str_nivel_2    byte   "RITCHIE$            "
+		str_nivel_3    byte   "KERNIGHAN$          "
+		str_nivel_4    byte   "STROUSTRUP$         "
 		str_nivel_5    byte   "MACROASSEMBLER$     "
 		str_ptr        word    ? ;ponteiro para as strings de nivel
-    
+    pede_nome      byte    "Digite o seu nome: $"
+    insuficiente   byte    "A sua classificacao nao o permite entrar no Top10$"
+
 		op             byte    ?             ; variavel que representara a opcao selecionada pelo utilizador
    	menu_str       byte    "MENU$"
 		jogar_str      byte    "1 - Jogar$"
 		top10_str      byte    "2 - Top 10$"
 		sair_str       byte    "3 - Sair$"
 		escolha_str    byte    "Escolha: $"
-		Nome_STR		db 	       "          $"
+		Nome_STR		   db 	       "          $"
     Nome_aux_str byte      "           $"
 		ArrayTopInicial	byte 20 DUP (0)
-		AjudaStr byte ' ',0
-        array_inteiros  byte  10 dup(?)
+		
+    array_inteiros  byte  10 dup(?)
 
-		ControloEscritaNomes db 0
-		ControloTr dw 0;
-		PonteiroFicheiro word 0
+		
+		ControloTr     dw      0
 		str_Pontos 	   db      "Pecas Apanhadas:00$"
 		FichTop        db      'top.TXT',0
 
-		controloPos db '1'
+		controloPos     db '1'
 		pontos        	word     0
-		pontosUnidades db 0
-		pontosDezenas db 0
-		ControloOrdArray word 0
+		pontos_total     word    0
 
-		n_niveis       byte     2            ; variavel que representa o numero de niveis
+		n_niveis       byte     4            ; variavel que representa o numero de niveis
 		flag           sbyte    0           ;flag para condicoes logicas
-    	timer          db    "            " ;string que ira mostrar o nosso tempo
+    timer          db     "            " ;string que ira mostrar o nosso tempo
 		STR12	 		     DB 		"            "	; String para 12 digitos
 		fim_jogo       byte   2               ;variavel que indica se o jogo ja acabou ou nao
     ;a 2 significa que e para passar ao proximo nivel
 
-    	seg_timer      dw    0        ;contador de segundos
+    seg_timer      dw    0        ;contador de segundos
 
 		Horas			     dw		 0				; Vai guardar a HORA actual
 		Minutos			   dw		 0				; Vai guardar os minutos actuais
@@ -67,9 +66,9 @@ dseg	segment para public 'data'
 		Old_seg			   dw		 0				; Guarda os ultimos segundos que foram lidos
 
 
-		Construir_nome db	    "                   $"	
-		
-		Fim_Perdeu		 db	    " Perdeu $"	
+		Construir_nome db	      "                   $"	
+		Fim_Ganhou     byte     "Vitoria!$"
+		Fim_Perdeu		 db	      "Perdeu!$"	
 
     Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
     Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
@@ -77,8 +76,6 @@ dseg	segment para public 'data'
     nome_fich       db      'labi1.TXT',0
     HandleFich      dw      0
     car_fich        db      ?
-	CharNome 		db      '2'
-	xxx 			word 'x'
 
 		Car				      db	    32	; Guarda um caracter do Ecran 
 		Cor				      db	    7	; Guarda os atributos de cor do caracter
@@ -227,14 +224,14 @@ Fim:
 		RET
 Reseta_String ENDP
 ;#####
-strcpy PROC ;coloca os conteudos de aux em nome
+strcpy MACRO dest, orig
     push si
 		push di
 		push ax
 		pushf
 	  
-		lea si, Nome_STR
-		lea di, Nome_aux_str
+		lea si, dest
+		lea di, orig
 copia:		
     mov al, [di]
 		cmp al, '$'
@@ -248,8 +245,7 @@ fim:
 		pop ax
 		pop di
 		pop si
-		ret
-strcpy ENDP
+ENDM
 
 
 
@@ -281,94 +277,6 @@ fim_init_string:
     ret
 init_string ENDP
 ;#################
-
-IMP_TOP	PROC
-
-		push ax
-		push si
-
-		xor si, si
-		xor ax,ax
-		mov ControloTr, 0
-		;abre ficheiro
-        mov     ah,3dh
-        mov     al,2
-        lea     dx,FichTop
-        int     21h
-        jc      erro_abrir
-        mov     HandleFich,ax
-        jmp     ler_ciclo
-
-erro_abrir:
-        mov     ah,09h
-        lea     dx,Erro_Open
-        int     21h
-        jmp     sai_f
-
-ler_ciclo:
-        mov     ah,3fh
-        mov     bx,HandleFich
-        mov     cx,1
-        lea     dx,car_fich
-        int     21h
-		jc		erro_ler
-		cmp		ax,0; EOF?
-		je		fecha_ficheiro
-		cmp ControloTr, 1
-		je Adiciona1
-		cmp ControloTr, 2
-		je Adiciona2
-		cmp ControloTr, 3
-		je FimControlo
-		cmp car_fich, '-'
-		je MudaControlo
-		jne NaoIgual
-MudaControlo:
-		mov ControloTr, 1
-		jmp NaoIgual
-Adiciona1: 
-	mov ah, car_fich
-	mov ArrayTopInicial[si], ah
-	inc si
-	mov ControloTr, 2
-	jmp NaoIgual
-
-Adiciona2:
-	mov ah, car_fich
-	mov ArrayTopInicial[si], ah
-	inc si
-	mov ControloTr, 3
-	jmp NaoIgual
-
-FimControlo:
-	mov ControloTr, 0
-NaoIgual:
-		mov     ah,02h
-		mov	  	dl,car_fich
-		int		21h
-		jmp		ler_ciclo
-
-erro_ler:
-        mov     ah,09h
-        lea     dx,Erro_Ler_Msg
-        int     21h
-
-fecha_ficheiro:
-        mov     ah,3eh
-        mov     bx,HandleFich
-        int     21h
-        jnc     sai_f
-
-        mov     ah,09h
-        lea     dx,Erro_Close
-        Int     21h
-sai_f:
-		pop ax	
-		pop si
-		RET
-		
-		
-IMP_TOP	endp	
 
 ;##########################################################
 Trata_Horas PROC
@@ -847,9 +755,14 @@ vitoria:
 		mov  fim_jogo, 2 ;passar ao proximo nivel
 		jmp fim
 recomeca:
-   mov pontos, 0 ;resetar as letras apanhadas
-   mov str_Pontos[16],48
-   mov str_Pontos[17],48
+   mov  ax, pontos_total
+	 mov  pontos, ax 
+	 mov 	bl, 10     
+	 div 	bl
+	 add 	al, 30h				
+	 add	ah,	30h				
+   mov str_Pontos[16],al
+   mov str_Pontos[17],ah
   ;resetar o construir nome
 	call Reseta_String
 	;repor as variaveis
@@ -882,14 +795,15 @@ GuardaNome PROC
 		
 		PUSH SI
 		PUSH AX
-		;Nome_STR
 		xor si,si
 		
 ContinuaGuardaNome:
+    cmp Nome_STR[si], '$' 
+		je  FimGuardaNome
 		xor ax,ax
 		mov ah, 1 
 		int 21h
-		cmp al, 30h
+		cmp al, 13       ;tecla enter
 		je FimGuardaNome
 		jne GuardaCHAR
 GuardaCHAR:
@@ -903,25 +817,8 @@ FimGuardaNome:
 		ret
 GuardaNome ENDP
 ;########################################################################
-MArray PROC
 
-		push si
-		pushf
-		xor si,si	
-Cont:
-		mov     ah,02h
-		mov	  	dl, ArrayTopInicial[si]
-		int		21h
-		inc     si
-		cmp     si, 20
-		jne     Cont
 
-		popf
-		pop si
-		ret
-MArray ENDP
-
-		
 
 ;#################
 sort PROC
@@ -1146,7 +1043,7 @@ ciclo:
 deconstroi_array_int ENDP
 ;#######################
 insert_points  PROC
-    	push si
+    push si
 		push di
 		push ax
 		push cx
@@ -1183,8 +1080,6 @@ insert_points  ENDP
 
 
 ;#######################
-
-
 
 AltArrTop	PROC
 
@@ -1267,8 +1162,6 @@ sai_f:
 		pop ax	
 		pop si
 		RET
-		
-		
 AltArrTop	endp
 ;########################################################################
 
@@ -1276,7 +1169,6 @@ AlteraTop	PROC
 
 		push ax
 		push si
-
 
 		xor si,si
 		xor ax,ax
@@ -1349,30 +1241,7 @@ sai_f:
 		ret
 AlteraTop	endp
 
-MControloPos PROC
-		push ax
 
-		mov ah, 2
-		mov dl, controloPos
-		int 21h  
-
-		pop ax
-		ret 
-MControloPos ENDP
-
-;PosicaoReal PROC
-;		push cx
-;		push ax
-
-;		mov ah, controloPos
-;		mov cl, 2
-;		div cl
-;		mov controloPos, 2
-
-;		pop cx
-;		pop ax
-;		ret
-;PosicaoReal ENDP
 ;########################################################################
 AlteraNomesTop	PROC
 
@@ -1449,7 +1318,7 @@ EscreveNome:
 		cmp  controloPos, '0' ; '0' do "10"
 		je   fecha_ficheiro
 		;##################
-		call strcpy ; coloca em Nome_STR os conteudos de Nome_aux_str
+		strcpy Nome_STR,Nome_aux_str; coloca em Nome_STR os conteudos de Nome_aux_str
 		inc  controloPos
 		cmp  controloPos, 58 ; numero 10, supostamente
 		je   number_10
@@ -1494,22 +1363,23 @@ Main  proc
 		mov			ax,0B800h
 		mov			es,ax
 		;#####################
-    call menu 
-		cmp  op, '3' ;sair? 
-		jz   fim_main
+escolhe_op:
+		call menu 
 		cmp  op, '2'; top 10?
 		jz   top10
-		; opcao 1==jogar
+		cmp  op, '3';sair
+		jz   fim_main
+		cmp  op, '1' ;jogar? 
+		jnz  escolhe_op
+
     lea bx, str_nivel_1 
-		mov str_ptr, bx ; str_ptr vai ser ponteiro para as strings nivel
-		mov n_niveis, 2 ;numero de niveis
+		mov str_ptr, bx   ; str_ptr vai ser ponteiro para as strings nivel
 inicio_jogo:
     cmp fim_jogo, 2; passar para o proximo nivel? 
 		jnz fim_loop
 		cmp n_niveis, 0
 		jz  fim_loop
     ;corpo
-
 		mov  seg_timer, 0 ;resetar o timer
 		call init_string
 		call apaga_ecran
@@ -1521,37 +1391,52 @@ inicio_jogo:
 		add  str_ptr, 20 ;passar para a proxima string
 		add nome_fich[4], 1 ;passar para o proximo ficheiro
 
+		mov dx, pontos 
+		mov pontos_total, dx
+
+
 		jmp inicio_jogo
 fim_loop:		
     cmp fim_jogo, 2; se ficamos sempre a subir de nivel
     jnz derrota
-		goto_xy 15,20
-    call GuardaNome
-	  call apaga_ecran
-	  call AltArrTop             ;constroi o array de pontuacoes 
-	  call sort                  ;ordena-o
-	  call constroi_array_int    ;controi um array com os numeros das pontuacoes
-	  call insert_points         ;insere os nossos pontos no array
-	  call deconstroi_array_int  ;volta a meter esse array em carateres para ser escrito
-	  call reordenaArray         ;coloca o array na forma correta para ser escrito no ficheiro
-		call apaga_ecran
-	  call MControloPos          ;escreve a posicao em que o nome deve ser inserido
-	  call AlteraTop             ;escreve o array de pontuacoes no ficheiro
-	  call AlteraNomesTop        ;escreve o nome por cima da posicao em que a nova pontuacao foi inserida
+		jmp vitoria
 
-	  jmp fim_main
 derrota:
-    goto_xy 15, 20
+    goto_xy 69, 14
 		MOSTRA  Fim_Perdeu
-		jmp     fim_main
+		jmp     ir_top
 		
 top10:
     call apaga_ecran
     goto_xy 0,0
-	call IMP_TOP	
-		
+    strcpy  nome_fich, FichTop ;atualiza o nome do ficheiro
+	  call IMP_FICH	
+		jmp  fim_main
+
+vitoria:
+    goto_xy 69, 14
+		MOSTRA Fim_Ganhou
+ir_top:
+	  call AltArrTop             ;constroi o array de pontuacoes 
+	  call sort                  ;ordena-o
+	  call constroi_array_int    ;controi um array com os numeros das pontuacoes
+		mov  ax, pontos
+    cmp  al, array_inteiros[9]
+		jb   nao_top10
+		goto_xy 15,20
+		MOSTRA pede_nome
+		call GuardaNome
+	  call insert_points         ;insere os nossos pontos no array
+	  call deconstroi_array_int  ;volta a meter esse array em carateres para ser escrito
+	  call reordenaArray         ;coloca o array na forma correta para ser escrito no ficheiro
+		call apaga_ecran
+	  call AlteraTop             ;escreve o array de pontuacoes no ficheiro
+	  call AlteraNomesTop        ;escreve o nome por cima da posicao em que a nova pontuacao foi inserida
+	  jmp fim_main
+nao_top10:
+    goto_xy 15,20
+    MOSTRA insuficiente
 fim_main:
-  
 		;#######################################
 		goto_xy		0,22   ;final do ecra?
 		mov			ah,4CH
